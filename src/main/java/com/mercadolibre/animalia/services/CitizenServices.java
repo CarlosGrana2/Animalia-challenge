@@ -1,6 +1,11 @@
 package com.mercadolibre.animalia.services;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mercadolibre.animalia.models.Webhooks;
+import com.mercadolibre.animalia.models.response.WebhookCitizensResponse;
+import lombok.extern.slf4j.Slf4j;
 import com.mercadolibre.animalia.models.Citizen;
 import com.mercadolibre.animalia.models.Role;
 import com.mercadolibre.animalia.models.Specie;
@@ -9,6 +14,7 @@ import com.mercadolibre.animalia.models.response.CitizenzPaginatedResponse;
 import com.mercadolibre.animalia.repositories.CitizensRepository;
 import com.mercadolibre.animalia.repositories.RolesRepository;
 import com.mercadolibre.animalia.repositories.SpecieRepository;
+import com.mercadolibre.animalia.repositories.WebhookRepository;
 import com.mercadolibre.animalia.spec.CitizenSpecs;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
@@ -16,20 +22,25 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 
 import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CitizenServices {
     private final CitizensRepository citizensRepository;
     private final RolesRepository rolesRepository;
     private final SpecieRepository specieRepository;
+    private final WebhookRepository webhookRepository;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
 
     @Transactional
     public List<Citizen> createCitizens(List<CreateCitizens> citizen) {
@@ -41,14 +52,14 @@ public class CitizenServices {
                 cit.getRoles().forEach(role -> {
                     Optional<Role> rol = rolesRepository.findById(role.getId_role());
                     if (!rol.isPresent()) {
-                        throw new IllegalArgumentException("Rol :" + role.getId_role() +" no existe");
+                        throw new IllegalArgumentException("Rol :" + role.getId_role() + " no existe");
                     }
                     roles.add(rol.get());
                 });
 
                 Optional<Specie> specie = specieRepository.findById(cit.getSpecies());
-                if(!specie.isPresent()){
-                    throw new IllegalArgumentException("Specie :" + cit.getSpecies() +"no existe");
+                if (!specie.isPresent()) {
+                    throw new IllegalArgumentException("Specie :" + cit.getSpecies() + "no existe");
                 }
 
                 Citizen Item = new Citizen();
@@ -61,13 +72,15 @@ public class CitizenServices {
             validateRangeRolAndUniqueRole(listCitizen);
 
         }
-        return citizensRepository.saveAll(listCitizen);
+
+        List<Citizen> response = citizensRepository.saveAll(listCitizen);
+        processMessagesForDestination(response, "Citizens", "POST");
+        return response;
 
     }
 
     @Transactional
     public Citizen createCitizen(CreateCitizens citizen) {
-
         Set<Role> roles = new HashSet<>();
         if (findByIdentifer(citizen.getIdentifier())) {
 
@@ -81,8 +94,8 @@ public class CitizenServices {
         }
 
         Optional<Specie> specie = specieRepository.findById(citizen.getSpecies());
-        if(!specie.isPresent()){
-            throw new IllegalArgumentException("Especie "+ citizen.getSpecies() + " no existe");
+        if (!specie.isPresent()) {
+            throw new IllegalArgumentException("Especie " + citizen.getSpecies() + " no existe");
         }
 
         Citizen citizenNew = new Citizen();
@@ -91,7 +104,13 @@ public class CitizenServices {
         citizenNew.setHigh_date(new Date());
         BeanUtils.copyProperties(citizen, citizenNew);
         validateUpdateRolesCitizens(citizenNew);
-        return citizensRepository.save(citizenNew);
+        Citizen response =  citizensRepository.save(citizenNew);
+
+        List<Citizen> citizensnotification =  new ArrayList<Citizen>();
+        citizensnotification.add(response);
+
+        processMessagesForDestination(citizensnotification,"Citizens", "POST");
+        return response;
 
     }
 
@@ -220,4 +239,34 @@ public class CitizenServices {
         return true;
     }
 
+
+    private void processMessagesForDestination(List<Citizen> citizen, String topic, String method) {
+        List<Webhooks> destinations = webhookRepository.findAll();
+        for (Webhooks web : destinations) {
+            sendNotification(web.getUrl_notification(), citizen, topic ,method);
+        }
+    }
+
+
+    private void sendNotification(String url, List<Citizen> response , String topic, String method) {
+
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+                        WebhookCitizensResponse  webhookCitizensResponse =  new WebhookCitizensResponse();
+            webhookCitizensResponse.setTopic(topic);
+            webhookCitizensResponse.setMethod(method);
+            webhookCitizensResponse.setBody(response);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            Thread.sleep(500);
+            HttpEntity<WebhookCitizensResponse> request =
+                    new HttpEntity<WebhookCitizensResponse>(webhookCitizensResponse, headers);
+
+            String result = restTemplate.postForObject(url, request, String.class);
+            JsonNode root = objectMapper.readTree(result);
+
+        } catch (Exception ex) {
+            log.error("sendMessage caught an exception: {}" , ex.getMessage());
+        }
+    }
 }

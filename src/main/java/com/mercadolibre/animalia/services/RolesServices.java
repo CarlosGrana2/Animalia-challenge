@@ -3,18 +3,18 @@ package com.mercadolibre.animalia.services;
 import com.mercadolibre.animalia.models.Role;
 import com.mercadolibre.animalia.repositories.RolesRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.sql.Timestamp;
 import java.util.*;
 
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class RolesServices {
 
     private final RolesRepository rolesRepository;
