@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.mercadolibre</groupId>
 	<artifactId>animalia</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>0.0.1</version>
 	<name>animalia</name>
 	<description>Prueba técnica Backend Mercado libre </description>
 	<properties>
