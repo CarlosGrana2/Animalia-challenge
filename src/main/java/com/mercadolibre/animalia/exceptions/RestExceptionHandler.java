@@ -53,7 +53,7 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler
     protected ResponseEntity<ErrorResponse> handleException(Exception exc) {
         HttpStatus httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-        return buildResponseEntity(httpStatus, new RuntimeException("Se presento un problema, reporte e intente luego."));
+        return buildResponseEntity(httpStatus, new RuntimeException("Se presento un problema, reporte e intente luego : " + exc.getMessage()));
     }
 
     private ResponseEntity<ErrorResponse> buildResponseEntity(HttpStatus httpStatus, Exception exc) {
@@ -62,12 +62,13 @@ public class RestExceptionHandler extends ResponseEntityExceptionHandler {
 
     private ResponseEntity<ErrorResponse> buildResponseEntity(HttpStatus httpStatus, Exception exc, List<String> errors) {
         ErrorResponse error = new ErrorResponse();
-        error.setMessage("MERCALIBRE-" + exc.getMessage());
+        error.setMessage("MERCALIBRE- " + exc.getMessage());
         error.setStatus(httpStatus.value());
         error.setTimestamp(new Date());
         error.setErrors(errors);
         return new ResponseEntity<>(error, httpStatus);
 
     }
+
 
 }
