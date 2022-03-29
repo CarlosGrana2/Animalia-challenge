@@ -105,6 +105,9 @@ Para su configuración debe seguir los siguiente pasos:
 ![img.png](img.png)
 
 
+
+##Notas
+Set no pruebas no cubierto completamente. 
 ## License
 
 MIT
