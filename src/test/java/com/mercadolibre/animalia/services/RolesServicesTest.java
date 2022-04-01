@@ -35,14 +35,12 @@ class RolesServicesTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.initMocks(this);
-
         roles = new Role();
         roles.setId(11L);
         roles.setStatus(Status.ACTIVE);
         roles.setDescription("Ejemplo rol");
         roles.setRange_rol(3);
         roles.setDate_create_rol(new Date());
-
     }
 
     @Test
