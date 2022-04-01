@@ -106,8 +106,8 @@ Para su configuración debe seguir los siguiente pasos:
 
 
 
-##Notas
-Set no pruebas no cubierto completamente. 
+## Notas
+Set de pruebas no cubierto completamente. 
 ## License
 
 MIT
