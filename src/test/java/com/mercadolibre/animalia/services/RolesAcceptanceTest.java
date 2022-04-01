@@ -46,7 +46,7 @@ public class RolesAcceptanceTest {
     @Test
     public void shouldGetRolesByIdCreated() throws Exception {
         restTemplate = new RestTemplate();
-        url = "http://localhost:" + ServerPort + "/api/roles/1";
+        url = "https://app-animalia-mercadolibre.herokuapp.com/api/roles/1";
         ResponseEntity responseEntity = restTemplate.getForEntity(url, String.class);
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     }
@@ -55,7 +55,7 @@ public class RolesAcceptanceTest {
     @Test
     public void shouldGetRoleCreated() throws Exception {
         restTemplate = new RestTemplate();
-        url = "http://localhost:" + ServerPort + "/api/roles/getAllRoles";
+        url = "https://app-animalia-mercadolibre.herokuapp.com/api/roles/getAllRoles";
         ResponseEntity responseEntity = restTemplate.getForEntity(url, String.class);
         assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     }
